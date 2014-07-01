@@ -10,6 +10,6 @@
 
 -record(bet,{pid::pid(),betinfo::any()}).
 
--record(user,{pid::pid(),userid::any(),usermoney::integer(),username::binary()}).
+-record(user,{pid::pid(),userid::binary(),usermoney::integer(),username::binary()}).
 
--record(count,{count::integer()}).
+-record(count,{key::binary(),count::integer()}).

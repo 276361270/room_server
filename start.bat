@@ -1,0 +1,1 @@
+werl -pa _build/default/lib/*/ebin
