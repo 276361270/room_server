@@ -43,10 +43,18 @@
 %%   {noreply, NewState :: term(), timeout() | hibernate} |
 %%   {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
 %%   {stop, Reason :: term(), NewState :: term()}.
+
+%%%创建房间留下的消息
 -callback create_room() ->
   {ok, {add, RoomName, CreateUser, RoomMaxUser}}|
   {ok, {updata, RoomName, CreateUser, RoomMaxUser}}|
-  {error, Reson}.
+  {error, Reson::term()}.
+
+%%%处理网关发送过来的消息
+-callback handler_message(Pid::pid(),Message::any(),State::any())->
+  {noreply, NewState :: #state{}} |
+  {noreply, NewState :: #state{}, timeout() | hibernate} |
+  {stop, Reason :: term(), NewState :: #state{}}.
 
 %%--------------------------------------------------------------------
 %% @doc
