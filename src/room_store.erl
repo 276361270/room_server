@@ -24,7 +24,7 @@ new_dets(Name, Opts) ->
 
 new_dets(Name, Path, Opts) ->
   ok = ensure_data_path(Path),
-  dets:open_file(Name, [{type, bag}, {file, ec_cnv:to_list(Path) ++ "/" ++ ec_cnv:to_list(Name) ++ ".dat"} | Opts]).
+  dets:open_file(Name, [{file, ec_cnv:to_list(Path) ++ "/" ++ ec_cnv:to_list(Name) ++ ".dat"} | Opts]).
 
 ensure_data_path(Path) ->
   ec_file:mkdir_p(ec_cnv:to_list(Path)).

@@ -13,7 +13,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -25,7 +25,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {callback :: module(), args :: any(), roomname :: any()}).
 
 -export([start_interval/2,
   send_message_after/3]).
@@ -48,13 +48,16 @@
 -callback create_room() ->
   {ok, {add, RoomName, CreateUser, RoomMaxUser}}|
   {ok, {updata, RoomName, CreateUser, RoomMaxUser}}|
-  {error, Reson::term()}.
+  {error, Reson :: term()}.
 
 %%%处理网关发送过来的消息
--callback handler_message(Pid::pid(),Message::any(),State::any())->
+-callback handler_message(Pid :: pid(), Message :: any(), State :: any()) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}.
+
+-callback close() ->
+  ok.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -62,10 +65,10 @@
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec(start_link() ->
+-spec(start_link([Parms::list()]) ->
   {ok, Pid :: pid()} | ignore | {error, Reason :: term()}).
-start_link() ->
-  gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link([CallBackModule, Args]) ->
+  gen_server:start_link({local, ?SERVER}, ?MODULE, [CallBackModule, Args], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -82,11 +85,26 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
+
+%% -callback create_room() ->
+%%   {ok, {add, RoomName, CreateUser, RoomMaxUser}}|
+%%   {ok, {updata, RoomName, CreateUser, RoomMaxUser}}|
+%%   {error, Reson::term()}.
 -spec(init(Args :: term()) ->
   {ok, State :: #state{}} | {ok, State :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term()} | ignore).
-init([]) ->
-  {ok, #state{}}.
+init([CallBackModule, Args]) ->
+  case CallBackModule:create_room() of
+    {ok, {add, RoomName, CreateUser, RoomMaxUser}} ->
+      ok = platfrom:add_room(RoomName, self(), local_time(), CreateUser, node(), RoomMaxUser),
+      {ok, #state{callback = CallBackModule, roomname = RoomName, args = Args}};
+    {ok, {updata, RoomName, CreateUser, RoomMaxUser}} ->
+      ok = platfrom:updata_room(RoomName, self(), local_time(), CreateUser, node(), RoomMaxUser),
+      {ok, #state{callback = CallBackModule, roomname = RoomName, args = Args}};
+    {error, _Error} ->
+      {stop, _Error}
+  end.
+
 
 %%--------------------------------------------------------------------
 %% @private
@@ -150,7 +168,9 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 -spec(terminate(Reason :: (normal | shutdown | {shutdown, term()} | term()),
     State :: #state{}) -> term()).
-terminate(_Reason, _State) ->
+terminate(_Reason, _State = #state{callback = CallBackModule, roomname = RoomName}) ->
+  ok = CallBackModule:close(),%% 房间消失之前做模块清理工作
+  platfrom:delete_room(RoomName),
   ok.
 
 %%--------------------------------------------------------------------
@@ -177,3 +197,7 @@ send_message_after(Time, TargetPid, DataBin) ->
 %%开始计时
 start_interval(Time, Message) when Time > 0 ->
   timer:send_interval(Time, Message).
+
+%% 本地当前时间
+local_time() ->
+  calendar:now_to_local_time(erlang:timestamp()).

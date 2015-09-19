@@ -16,3 +16,7 @@ _deps
 _plugins
 _tdeps
 logs
+
+*.gz
+
+tmp/.tmp_dir744956061947/packages.gz

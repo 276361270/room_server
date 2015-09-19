@@ -8,8 +8,8 @@
 %%%-------------------------------------------------------------------
 -author("apple").
 
--record(bet,{pid::pid(),betinfo::any()}).
+-record(bet,{pid::pid(),userid::integer(),betinfo::list()}).
 
--record(user,{pid::pid(),userid::binary(),usermoney::integer(),username::binary()}).
+-record(user,{pid::pid(),userid::binary(),usermoney::integer(),username::binary(),usertype::boolean()}).
 
 -record(count,{key::binary(),count::integer()}).
