@@ -54,8 +54,9 @@
 -callback handler_message(Pid :: pid(), Message :: any(), State :: any()) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
-  {stop, Reason :: term(), NewState :: #state{}}.
-
+  {stop, Reason :: term(), NewState :: #state
+-callback handle_login({UserPid::pid(), enterroom}) ->
+  {ok,login}|{error,Errcode::interger()}.	
 -callback close() ->
   ok.
 
@@ -121,6 +122,9 @@ init([CallBackModule, Args]) ->
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), Reply :: term(), NewState :: #state{}} |
   {stop, Reason :: term(), NewState :: #state{}}).
+handle_call({UserPid,enterroom},_From,State=#state{callback=CallBackModule})->
+  {reply,CallBackModule:handle_login({UserPid,enterroom}),State,hibernate};
+	
 handle_call(_Request, _From, State) ->
   {reply, ok, State, hibernate}.
 
@@ -135,6 +139,8 @@ handle_call(_Request, _From, State) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
+handle_cast({UserPid,DataBin},State=#state{callback =CallBackModule})->
+	CallBackModule:handler_message(UserPid,DataBin, State);
 handle_cast(_Request, State) ->
   {noreply, State, hibernate}.
 

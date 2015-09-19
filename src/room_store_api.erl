@@ -121,6 +121,8 @@ bet_info_test(Count) ->
   end),
   io:format("time~p~n", [Time]).
 
+.
+
 %%io:format("bet ~p~n",[self()]),
 %%io:format("bet ~p~n",[get_bet_info(self())]).
 
